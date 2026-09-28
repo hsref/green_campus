@@ -80,11 +80,17 @@ export default function CampusMapTool() {
         color: var(--danger); transition: all .15s; font-family: 'Space Grotesk',sans-serif;
       }
       .map-clear-btn:hover { background: var(--danger); color: #fff; }
+      .map-screenshot-btn {
+        padding: 5px 12px; border-radius: 4px; font-size: 11px; font-weight: 600;
+        cursor: pointer; border: 1px solid var(--accent2); background: transparent;
+        color: var(--accent2); transition: all .15s; font-family: 'Space Grotesk',sans-serif;
+      }
+      .map-screenshot-btn:hover { background: var(--accent2); color: #000; }
 
       .map-main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
       .map-sidebar {
-        width: 300px;
+        width: 220px;
         flex-shrink: 0;
         background: var(--surface);
         border-right: 1px solid var(--border);
@@ -95,12 +101,14 @@ export default function CampusMapTool() {
         gap: 12px;
       }
       .map-sidebar-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--accent); padding: 6px 4px 4px; border-bottom: 1px solid var(--border); margin-top: 4px; }
+      .map-tech-wrap { display: flex; align-items: center; gap: 4px; }
       .map-tech-btn {
         display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 5px;
         cursor: pointer; border: 1px solid var(--border); background: var(--surface2);
         color: var(--text); font-family: 'Space Grotesk',sans-serif; font-size: 12px;
-        font-weight: 500; transition: all .15s; text-align: left; width: 100%;
+        font-weight: 500; transition: all .15s; text-align: left; flex: 1; min-width: 0;
       }
+      .map-card-float { flex-shrink: 0; }
       .map-tech-btn:hover { border-color: var(--accent2); background: #1f2a38; }
       .map-tech-btn.active { border-color: currentColor; }
       .map-tech-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -122,13 +130,25 @@ export default function CampusMapTool() {
       .map-count-val { font-family: 'JetBrains Mono',monospace; font-weight: 600; color: var(--accent); }
 
 
-      .map-container {
-        flex: 1;
-        overflow: auto;
+      .map-area {
         position: relative;
-        background: #0a1628;
+        flex: 1;
+        overflow: hidden;
         min-height: 0;
       }
+      .map-container {
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background: #0a1628;
+      }
+      .map-pin {
+        position: absolute;
+        z-index: 20;
+        pointer-events: auto;
+      }
+      .map-pin.bottom-left  { bottom: 12px; left: 12px; }
+      .map-pin.bottom-right { bottom: 12px; right: 12px; }
       .map-canvas-wrap {
         position: relative;
         display: inline-block;
@@ -146,7 +166,6 @@ export default function CampusMapTool() {
       .map-tooltip.hidden { display: none; }
 
       .map-info-panel {
-        position: absolute; bottom: 12px; right: 12px;
         background: rgba(22,27,34,.95); border: 1px solid var(--border);
         padding: 10px 12px; border-radius: 6px; font-size: 10px;
         font-family: 'JetBrains Mono',monospace; pointer-events: none; min-width: 160px;
@@ -160,6 +179,31 @@ export default function CampusMapTool() {
       .map-legend { padding: 6px; background: var(--surface2); border-radius: 5px; border: 1px solid var(--border); }
       .map-legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--muted); padding: 1px 0; }
       .map-legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+      .map-help-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+        background: var(--surface2); border: 1px solid var(--muted); color: var(--muted);
+        font-size: 9px; font-weight: 700; cursor: help; line-height: 1; padding: 0;
+        font-family: 'JetBrains Mono', monospace; margin-left: 4px; pointer-events: auto;
+      }
+      .map-help-btn:hover, .map-help-btn.active { background: var(--accent2); border-color: var(--accent2); color: #000; }
+
+      .map-help-popover {
+        position: fixed; z-index: 1000; max-width: 260px;
+        background: var(--surface); border: 1px solid var(--accent2); border-radius: 6px;
+        padding: 10px 26px 10px 12px; font-size: 11px; line-height: 1.5; color: var(--text);
+        box-shadow: 0 8px 24px rgba(0,0,0,.5); font-family: 'Space Grotesk', sans-serif;
+      }
+      .map-help-popover.hidden { display: none; }
+      .map-help-popover h4 { margin: 0 0 6px; font-size: 11px; color: var(--accent2); text-transform: uppercase; letter-spacing: .04em; font-weight: 700; }
+      .map-help-popover p { margin: 0 0 6px; }
+      .map-help-popover p:last-child { margin-bottom: 0; }
+      .map-help-close {
+        position: absolute; top: 6px; right: 8px; cursor: pointer; color: var(--muted);
+        font-size: 12px; line-height: 1;
+      }
+      .map-help-close:hover { color: var(--text); }
 
       /* Map Selection Screen */
       .map-sel-screen { height: 100%; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg); }
@@ -177,6 +221,25 @@ export default function CampusMapTool() {
       .map-sel-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; border: 1px solid; font-weight: 600; }
       .map-back-btn { padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all .15s; font-family: 'Space Grotesk',sans-serif; }
       .map-back-btn:hover { color: var(--text); border-color: var(--muted); }
+
+      /* ── Light theme overrides ──────────────────────────────────── */
+      [data-theme="light"] .map-tool-root {
+        --bg: #f5f4f0;
+        --surface: #ffffff;
+        --surface2: #ede9e0;
+        --border: #d0cdc4;
+        --text: #1a1917;
+        --muted: #6b6960;
+        --accent: #2a6e4e;
+        --accent2: #1a5fb4;
+        --warn: #c45c1a;
+        --danger: #b83232;
+      }
+      [data-theme="light"] .map-tool-header { background: #ffffff; }
+      [data-theme="light"] .map-container { background: #c8d8e8; }
+      [data-theme="light"] .map-tech-btn:hover { background: #e8f2ec !important; }
+      [data-theme="light"] .map-info-panel { background: rgba(245,244,240,.95); }
+      [data-theme="light"] .map-tab.active { color: #fff; }
     `;
     document.head.appendChild(style);
 
@@ -198,13 +261,14 @@ export default function CampusMapTool() {
           <button class="map-back-btn" id="mapBackBtn">← Maps</button>
           <h1 id="mapToolTitle" style="margin-left:8px">⚡ Map Placer</h1>
           <div class="map-header-stats">
-            <div class="map-stat" id="statPower">Power: <span>0 kW</span></div>
-            <div class="map-stat" id="statStorage">Storage: <span>0 kWh</span></div>
-            <div class="map-stat" id="statCable">Cable: <span>0 ft</span></div>
-            <div class="map-stat" id="statBudget">Budget: <span>$0</span></div>
-            <div class="map-stat" id="statIsland">Island: <span>0 h</span></div>
-            <div class="map-stat" id="statForest">Forest: <span>—</span></div>
+            <div class="map-stat" id="statPower">Power<button type="button" class="map-help-btn" data-help="power">?</button>: <span id="valPower">0 kW</span></div>
+            <div class="map-stat" id="statStorage">Storage<button type="button" class="map-help-btn" data-help="storage">?</button>: <span id="valStorage">0 kWh</span></div>
+            <div class="map-stat" id="statCable">Cable<button type="button" class="map-help-btn" data-help="cable">?</button>: <span id="valCable">0 ft</span></div>
+            <div class="map-stat" id="statBudget">Budget<button type="button" class="map-help-btn" data-help="budget">?</button>: <span id="valBudget">$0</span></div>
+            <div class="map-stat" id="statIsland">Island<button type="button" class="map-help-btn" data-help="island">?</button>: <span id="valIsland">0 h</span></div>
+            <div class="map-stat" id="statForest">Forest<button type="button" class="map-help-btn" data-help="forest">?</button>: <span id="valForest">—</span></div>
           </div>
+          <button class="map-screenshot-btn" id="mapScreenshotBtn">📷 Save Map</button>
           <button class="map-clear-btn" id="mapClearBtn">✕ Clear Map</button>
         </div>
 
@@ -214,58 +278,62 @@ export default function CampusMapTool() {
             <div class="map-mode-row">
               <button class="map-mode-btn active" id="modPlace">Place</button>
               <button class="map-mode-btn" id="modErase">Erase</button>
+              <button class="map-mode-btn" id="modMove">Move</button>
               <button class="map-mode-btn" id="modPan">Pan</button>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:4px;line-height:1.4">
+              Shift+click to rotate buildings &amp; panels. Move mode: drag any unit to reposition it.
             </div>
 
             <div class="map-sidebar-section">Generation</div>
-            <button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-solar" style="color:#f0b429">
               <span class="map-tech-dot" style="background:#f0b429"></span>
-              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M · 1.1 acres (5 sq)</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
+              <div><div>Solar PV</div><div class="map-tech-meta">500kW · $1M · land</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('solar')" title="View Solar PV card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-wind" style="color:#58a6ff">
               <span class="map-tech-dot" style="background:#58a6ff"></span>
-              <div><div>Wind</div><div class="map-tech-meta">3000kW · $2.5M · 500ft buffer</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
+              <div><div>Wind</div><div class="map-tech-meta">3000kW · $4.5M · land / water · 250ft buffer</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('wind')" title="View Wind Turbine card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-geo" style="color:#bc8cff">
               <span class="map-tech-dot" style="background:#bc8cff"></span>
-              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $5M · 3 acres (13 sq)</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
+              <div><div>Geothermal</div><div class="map-tech-meta">2000kW · $8M · land</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('geo')" title="View Geothermal card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-hydroL" style="color:#39c8e8">
               <span class="map-tech-dot" style="background:#39c8e8"></span>
               <div><div>Hydro (Low)</div><div class="map-tech-meta">500kW · $1M · water</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-hydroH" style="color:#0099cc">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('hydroL')" title="View Hydro Low Head card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-hydroH" style="color:#0099cc">
               <span class="map-tech-dot" style="background:#0099cc"></span>
               <div><div>Hydro (High)</div><div class="map-tech-meta">2000kW · $4M · water</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-tidal" style="color:#00c8aa">
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('hydroH')" title="View Hydro High Head card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-tidal" style="color:#00c8aa">
               <span class="map-tech-dot" style="background:#00c8aa"></span>
-              <div><div>Tidal</div><div class="map-tech-meta">500kW · $1.5M · coast</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
+              <div><div>Tidal</div><div class="map-tech-meta">500kW · $1.5M · marine</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('tidal')" title="View Tidal card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-biomass" style="color:#7ee787">
               <span class="map-tech-dot" style="background:#7ee787"></span>
-              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M · 3 acres (13 sq)</div></div>
-            </button>
+              <div><div>Biomass</div><div class="map-tech-meta">1000kW · $3.5M · land</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('biomass')" title="View Biomass card">&#x1F3B4;</button></div>
 
             <div class="map-sidebar-section">Storage</div>
-            <button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-bess" style="color:#ff8c8c">
               <span class="map-tech-dot" style="background:#ff8c8c"></span>
-              <div><div>BESS</div><div class="map-tech-meta">1000kWh · $500K · 5,000 sq ft</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
+              <div><div>Lithium Ion</div><div class="map-tech-meta">1000kWh · $500K · land</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('bess')" title="View Lithium Ion card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-thermal" style="color:#ffb347">
               <span class="map-tech-dot" style="background:#ffb347"></span>
-              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M · 10,000 sq ft</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
+              <div><div>Thermal</div><div class="map-tech-meta">2500kWh · $1M · land</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('thermal')" title="View Thermal Storage card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-flywheel" style="color:#da8fff">
               <span class="map-tech-dot" style="background:#da8fff"></span>
-              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K · 10,000 sq ft</div></div>
-            </button>
-            <button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
+              <div><div>Flywheel</div><div class="map-tech-meta">1000kWh · $300K · land</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('flywheel')" title="View Mechanical Flywheel card">&#x1F3B4;</button></div>
+            <div class="map-tech-wrap"><button class="map-tech-btn" id="btn-caes" style="color:#84fab0">
               <span class="map-tech-dot" style="background:#84fab0"></span>
-              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M · 20,000 sq ft</div></div>
-            </button>
+              <div><div>CAES</div><div class="map-tech-meta">5000kWh · $2M · land</div></div>
+            </button><button class="gc-card-btn map-card-float" onclick="window.openCardModal('caes')" title="View CAES card">&#x1F3B4;</button></div>
 
-            <div class="map-sidebar-section">Placements</div>
+            <div class="map-sidebar-section">Placements<button type="button" class="map-help-btn" data-help="placements">?</button></div>
             <div class="map-counts" id="countsPanel">
               <div style="font-size:10px;color:var(--muted);text-align:center;padding:4px">No placements yet</div>
             </div>
@@ -286,26 +354,29 @@ export default function CampusMapTool() {
 
           </div>
 
-          <div class="map-container" id="mapContainer">
-            <div class="map-canvas-wrap" id="canvasWrap">
-              <canvas id="bgCanvas"></canvas>
-              <canvas id="overlayCanvas" style="position:absolute;top:0;left:0"></canvas>
+          <div class="map-area">
+            <div class="map-container" id="mapContainer">
+              <div class="map-canvas-wrap" id="canvasWrap">
+                <canvas id="bgCanvas"></canvas>
+                <canvas id="overlayCanvas" style="position:absolute;top:0;left:0"></canvas>
+              </div>
             </div>
-            <div style="position:absolute;bottom:12px;left:12px;display:flex;gap:4px;z-index:10">
+            <div class="map-pin bottom-left" style="display:flex;gap:4px">
               <button id="zoomIn" style="width:28px;height:28px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#e6edf3;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:0">+</button>
               <button id="zoomReset" style="height:28px;padding:0 8px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#7d8590;font-size:10px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">100%</button>
               <button id="zoomOut" style="width:28px;height:28px;border-radius:4px;border:1px solid #30363d;background:#161b22;color:#e6edf3;font-size:16px;font-weight:700;cursor:pointer;line-height:1;padding:0">−</button>
             </div>
-            <div class="map-info-panel">
-              <div class="map-info-row"><span class="map-info-key">Cursor</span><span class="map-info-val" id="infoCursor">–</span></div>
-              <div class="map-info-row"><span class="map-info-key">Zone</span><span class="map-info-val" id="infoZone">–</span></div>
-              <div class="map-info-row"><span class="map-info-key">Distance to sub</span><span class="map-info-val" id="infoDist">–</span></div>
-              <div class="map-info-row"><span class="map-info-key">Cable cost</span><span class="map-info-val" id="infoCableCost">–</span></div>
+            <div class="map-pin bottom-right map-info-panel">
+              <div class="map-info-row"><span class="map-info-key">Cursor<button type="button" class="map-help-btn" data-help="infoCursor">?</button></span><span class="map-info-val" id="infoCursor">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Zone<button type="button" class="map-help-btn" data-help="infoZone">?</button></span><span class="map-info-val" id="infoZone">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Distance to sub<button type="button" class="map-help-btn" data-help="infoDist">?</button></span><span class="map-info-val" id="infoDist">–</span></div>
+              <div class="map-info-row"><span class="map-info-key">Cable cost<button type="button" class="map-help-btn" data-help="infoCableCost">?</button></span><span class="map-info-val" id="infoCableCost">–</span></div>
             </div>
           </div>
         </div>
 
         <div class="map-tooltip hidden" id="mapTooltip"></div>
+        <div class="map-help-popover hidden" id="mapHelpPopover"></div>
         </div><!-- /mapToolScreen -->
       </div>
     `;
@@ -326,18 +397,18 @@ export default function CampusMapTool() {
 }
 
 function initMapTool() {
-  const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferFt: number; squareFootprint: number }> = {
-    solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000 },
-    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:2500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000 },
-    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:5000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:130000 },
-    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
-    hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000 },
-    tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000 },
-    biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferFt:0,   squareFootprint:130000 },
-    bess:     { name:'BESS',         color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferFt:0,   squareFootprint:5000 },
-    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000 },
-    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000 },
-    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferFt:0,   squareFootprint:20000 },
+  const TECHS: Record<string, { name: string; color: string; kw: number; cost: number; storage: number; storageKwh: number; symbol: string; size: number; rule: string; bufferFt: number; squareFootprint: number; placedRadiusFt: number; placedWidthFt?: number; placedHeightFt?: number; constructionWidthFt?: number; constructionHeightFt?: number }> = {
+    solar:    { name:'Solar PV',     color:'#f0b429', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'☀', size:2.25, rule:'land',  bufferFt:0,   squareFootprint:50000,  placedRadiusFt:75,  placedWidthFt:250, placedHeightFt:175 },
+    wind:     { name:'Wind',         color:'#58a6ff', kw:3000, cost:4500000,  storage:0, storageKwh:0,    symbol:'🌬', size:1,    rule:'any',   bufferFt:250, squareFootprint:1000,   placedRadiusFt:50  },
+    geo:      { name:'Geothermal',   color:'#bc8cff', kw:2000, cost:8000000,  storage:0, storageKwh:0,    symbol:'⬡', size:3.6,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:40,  placedWidthFt:100, placedHeightFt:50, constructionWidthFt:400, constructionHeightFt:325 },
+    hydroL:   { name:'Hydro Low',    color:'#39c8e8', kw:500,  cost:1000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
+    hydroH:   { name:'Hydro High',   color:'#0099cc', kw:2000, cost:4000000,  storage:0, storageKwh:0,    symbol:'〜', size:1,    rule:'water', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:40  },
+    tidal:    { name:'Tidal',        color:'#00c8aa', kw:500,  cost:1500000,  storage:0, storageKwh:0,    symbol:'⊕', size:1,    rule:'coast', bufferFt:0,   squareFootprint:10000,  placedRadiusFt:20  },
+    biomass:  { name:'Biomass',      color:'#7ee787', kw:1000, cost:3500000,  storage:0, storageKwh:0,    symbol:'🌿', size:3.6,  rule:'road',  bufferFt:0,   squareFootprint:130000, placedRadiusFt:75,  placedWidthFt:150, placedHeightFt:100 },
+    bess:     { name:'Lithium Ion',   color:'#ff8c8c', kw:0,    cost:500000,   storage:1, storageKwh:1000, symbol:'▣', size:0.5,  rule:'land',  bufferFt:0,   squareFootprint:5000,   placedRadiusFt:25  },
+    thermal:  { name:'Thermal',      color:'#ffb347', kw:0,    cost:1000000,  storage:1, storageKwh:2500, symbol:'◈', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
+    flywheel: { name:'Flywheel',     color:'#da8fff', kw:0,    cost:300000,   storage:1, storageKwh:1000, symbol:'⊙', size:1,    rule:'land',  bufferFt:0,   squareFootprint:10000,  placedRadiusFt:25  },
+    caes:     { name:'CAES',         color:'#84fab0', kw:0,    cost:2000000,  storage:1, storageKwh:5000, symbol:'◎', size:2,    rule:'land',  bufferFt:0,   squareFootprint:20000,  placedRadiusFt:25  },
   };
 
   type Feature = {
@@ -365,7 +436,7 @@ function initMapTool() {
     RLS: {
       name: 'RLS — Inland School',
       desc: 'Inland campus, forested hillside, no water access',
-      width: 900, height: 1274, scale: 3048,
+      width: 900, height: 1274, scale: 893,
       substationPx: [353, 525],
       features: [
         { type:'forest', points:[[653,533],[559,508],[457,519],[501,594],[432,612],[409,686],[339,684],[275,790],[333,1243],[778,1183],[773,1003],[749,1006],[697,677],[559,690],[543,590],[668,578]] },
@@ -381,9 +452,10 @@ function initMapTool() {
     EDS: {
       name: 'EDS — On Penobscot Bay',
       desc: 'Coastal campus on Penobscot Bay',
-      width: 950, height: 671, scale: 3048,
+      width: 950, height: 671, scale: 1274,
       substationPx: [440, 500],
       features: [
+        { type:'ocean', points:[[0,0],[600,0],[400,50],[300,90],[260,175],[245,280],[240,381],[0,381]] },
         { type:'water', points:[[245,208],[260,285],[245,381],[252,381],[267,302],[256,218]] },
         { type:'forest', points:[[451,621],[537,566],[546,533],[517,490],[507,465],[513,449],[260,381],[267,238],[300,133],[353,70],[680,358],[598,643]] },
         { type:'building', points:[[334,432],[449,449],[440,492],[357,479],[350,494],[324,483]] },
@@ -396,7 +468,7 @@ function initMapTool() {
     CES: {
       name: 'CES — River / Tidal',
       desc: 'Tidal River nearby = high hydro potential',
-      width: 950, height: 671, scale: 4048,
+      width: 950, height: 671, scale: 1677,
       substationPx: [196, 363],
       features: [
         { type:'forest', points:[[707,263],[765,251],[804,300],[780,317],[784,343],[702,363],[685,326],[522,377],[682,320]] },
@@ -412,9 +484,9 @@ function initMapTool() {
       ]
     },
     LCS: {
-      name: 'LCS — Coastal Forest',
+      name: 'LCS — Lakeside Forest',
       desc: 'Heavily forested campus with field and nearby pond',
-      width: 950, height: 671, scale: 5213,
+      width: 950, height: 671, scale: 2201,
       substationPx: [660, 145],
       features: [
         { type:'forest', points:[[171,300],[316,213],[339,259],[396,268],[426,255],[402,192],[499,169],[491,114],[546,99],[556,136],[524,149],[537,180],[570,173],[593,237],[581,316],[612,322],[637,375],[750,349],[775,429],[660,445],[506,490],[414,534],[403,576],[275,621],[254,617]] },
@@ -428,9 +500,9 @@ function initMapTool() {
     },
   
     STG: {
-      name: 'STG — Lakeside Campus',
+      name: 'STG — Lakeside Coastal Campus',
       desc: 'Hillside campus beside a marsh and tidal zone',
-      width: 900, height: 1274, scale: 3448,
+      width: 900, height: 1274, scale: 1240,
       substationPx: [565, 870],
       features: [
         { type:'road', points:[[505,948],[534,952],[523,1011],[550,1087],[544,1163],[525,1154]] },
@@ -462,15 +534,128 @@ function initMapTool() {
     });
   });
 
+  const HELP: Record<string, { title: string; body: string[] }> = {
+    power: {
+      title: 'Power (Actual Peak Supply)',
+      body: [
+        'Sum of output (kW) for every generation unit placed across all campus maps, compared against the campus peak-demand target.',
+        'Placing more than the campus peak demand (default 3,000 kW, or the value set by an active pivot card) triggers a $500K utility interconnection upgrade fee — shown on the Budget stat.',
+      ],
+    },
+    storage: {
+      title: 'Storage',
+      body: ["Total energy storage capacity (kWh) from every placed Lithium Ion, Thermal, Flywheel, and CAES unit. Storage doesn't add generation — it feeds directly into the Island stat's grid-down resilience calculation."],
+    },
+    cable: {
+      title: 'Cable Length & Cost',
+      body: [
+        "Total length of the cable routes connecting your placements to the substation, costed at $500/ft ($50K per 100 ft).",
+      ],
+    },
+    budget: {
+      title: 'Budget',
+      body: [
+        'Equipment cost plus cable cost, plus a $500K utility upgrade fee once total power exceeds the campus peak-demand threshold.',
+        'Turns red once spending exceeds the budget set by your selected Budget Tier data card.',
+      ],
+    },
+    island: {
+      title: 'Island Time (Grid-Down Resilience)',
+      body: ["Hours the campus could run on stored energy alone if cut off from the grid: Storage (kWh) ÷ the campus's actual peak hourly demand (from the Simulator's 24-hour demand curve — defaults to 3,000 kW, but rises or falls with the Demand Pattern data card and any active pivot card like AI Learning Hub or SCADA).", 'This mirrors how real campuses and hospitals size backup power to survive a storm outage or grid failure.'],
+    },
+    forest: {
+      title: 'Forest',
+      body: [
+        "Percent of the campus site that's forested, and — once you start placing equipment — what percent of that forest your placements' footprints actually clear.",
+        'Clearing more than 25% of forested land is a violation once the Vernal Pool Protection environmental card is active (turns red past 25%, amber past 10%), mirroring a real habitat-clearing permit limit.',
+      ],
+    },
+    placements: {
+      title: 'Placements',
+      body: ["Running tally of every unit placed on the currently-selected campus map, plus the combined cost across map."],
+    },
+    infoCursor: {
+      title: 'Cursor Position',
+      body: ["Your mouse position converted to real-world feet, using this specific campus map's calibrated scale (each map is scaled independently from its source survey, so the same pixel distance means a different number of feet on different maps)."],
+    },
+    infoZone: {
+      title: 'Zone',
+      body: ["The map feature under your cursor — water, forest, road, no-build, etc. Hover any area to see a tooltip explaining what can (or can't) be built there."],
+    },
+    infoDist: {
+      title: 'Distance to Substation',
+      body: ['Straight-line distance from the cursor (or the tech about to be placed) to the substation marker, in real feet — the same distance used to estimate cable cost below.'],
+    },
+    infoCableCost: {
+      title: 'Cable Cost (Live Estimate)',
+      body: ['What connecting a unit placed here would cost, at $500/ft of straight-line distance to the substation. Updates live as you move the cursor — actual routed cable cost may differ slightly since real routing follows a minimum-spanning tree across all your placements, not a straight line to each one.'],
+    },
+  };
+
+  let activeHelpBtn: HTMLElement | null = null;
+
+  function positionPopover(pop: HTMLElement, anchor: HTMLElement) {
+    const rect = anchor.getBoundingClientRect();
+    const popRect = pop.getBoundingClientRect();
+    let left = rect.left;
+    let top = rect.bottom + 6;
+    if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
+    if (left < 8) left = 8;
+    if (top + popRect.height > window.innerHeight - 8) top = rect.top - popRect.height - 6;
+    if (top < 8) top = 8;
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  }
+
+  function showHelp(key: string, anchor: HTMLElement) {
+    const pop = getEl('mapHelpPopover');
+    const info = HELP[key];
+    if (!pop || !info) return;
+    pop.innerHTML = `<span class="map-help-close">✕</span><h4>${info.title}</h4>` + info.body.map(p => `<p>${p}</p>`).join('');
+    pop.classList.remove('hidden');
+    positionPopover(pop, anchor);
+    activeHelpBtn?.classList.remove('active');
+    anchor.classList.add('active');
+    activeHelpBtn = anchor;
+  }
+
+  function hideHelp() {
+    getEl('mapHelpPopover')?.classList.add('hidden');
+    activeHelpBtn?.classList.remove('active');
+    activeHelpBtn = null;
+  }
+
+  document.addEventListener('click', (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const closeBtn = target.closest('.map-help-close');
+    if (closeBtn) { e.stopPropagation(); hideHelp(); return; }
+    const helpBtn = target.closest('.map-help-btn') as HTMLElement | null;
+    const pop = getEl('mapHelpPopover');
+    if (helpBtn) {
+      e.stopPropagation();
+      const key = helpBtn.dataset.help;
+      if (!key) return;
+      if (activeHelpBtn === helpBtn) hideHelp();
+      else showHelp(key, helpBtn);
+      return;
+    }
+    if (pop && !pop.classList.contains('hidden') && !pop.contains(target)) hideHelp();
+  }, true);
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') hideHelp();
+  });
+
   const GRID = 18;
   let currentMap = 'EDS';
   let selectedTech = 'solar';
+  let pendingRotation = 0;
   let mode = 'place';
   let mapScale = 1;
   let zoomLevel = 1.0;
   const MIN_ZOOM = 0.5;
   const MAX_ZOOM = 5.0;
-  type Placement = { tech: string; cx: number; cy: number; id: number; violations: string[] };
+  type Placement = { tech: string; cx: number; cy: number; id: number; violations: string[]; rotation?: number };
   type Cable = { x1: number; y1: number; x2: number; y2: number };
   const placements: Record<string, Placement[]> = {};
   const cables: Record<string, Cable[]> = {};
@@ -484,7 +669,7 @@ function initMapTool() {
   Object.keys(MAPS).forEach(id => {
     const img = new Image();
     img.onload = () => { if (id === currentMap) drawAll(); };
-    img.src = `${BASE_URL}maps/${id}.png`;
+    img.src = `${BASE_URL}maps/${id}.jpg`;
     mapImages[id] = img;
   });
 
@@ -548,7 +733,7 @@ function initMapTool() {
     RLS: [{ label: 'Inland', color: '#7ee787' }, { label: 'Forest', color: '#2ea043' }, { label: 'Wind', color: '#58a6ff' }],
     EDS: [{ label: 'Coastal', color: '#39c8e8' }, { label: 'Tidal', color: '#00c8aa' }, { label: 'High Contour', color: '#d29922' }],
     CES: [{ label: 'River', color: '#39c8e8' }, { label: 'Hydro', color: '#0099cc' }, { label: 'Open Fields', color: '#7ee787' }],
-    LCS: [{ label: 'Coastal', color: '#39c8e8' }, { label: 'Forest', color: '#2ea043' }, { label: 'High Contour', color: '#d29922' }],
+    LCS: [{ label: 'Lakeside', color: '#58a6ff' }, { label: 'Forest', color: '#2ea043' }, { label: 'High Contour', color: '#d29922' }],
     STG: [{ label: 'Lakeside', color: '#58a6ff' }, { label: 'Hillside', color: '#d29922' }, { label: 'Hydro', color: '#0099cc' }],
   };
   const selGrid = getEl('mapSelGrid');
@@ -560,7 +745,7 @@ function initMapTool() {
         `<span class="map-sel-tag" style="color:${t.color};border-color:${t.color}40;background:${t.color}15">${t.label}</span>`
       ).join('');
       card.innerHTML = `
-        <img src="${BASE_URL}maps/${id}.png" alt="${m.name}" />
+        <img src="${BASE_URL}maps/${id}.jpg" alt="${m.name}" />
         <div class="map-sel-card-info">
           <div class="map-sel-card-name">${m.name}</div>
           <div class="map-sel-card-desc">${m.desc}</div>
@@ -588,8 +773,27 @@ function initMapTool() {
   // Mode buttons
   getEl('modPlace')?.addEventListener('click', () => setMode('place'));
   getEl('modErase')?.addEventListener('click', () => setMode('erase'));
-  getEl('modPan')?.addEventListener('click', () => setMode('pan'));
+  getEl('modMove')?.addEventListener('click',  () => setMode('move'));
+  getEl('modPan')?.addEventListener('click',   () => setMode('pan'));
   getEl('mapClearBtn')?.addEventListener('click', clearAll);
+
+  getEl('mapScreenshotBtn')?.addEventListener('click', () => {
+    const bg = getEl<HTMLCanvasElement>('bgCanvas');
+    const ov = getEl<HTMLCanvasElement>('overlayCanvas');
+    if (!bg) return;
+    const tmp = document.createElement('canvas');
+    tmp.width = bg.width; tmp.height = bg.height;
+    const ctx = tmp.getContext('2d')!;
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, tmp.width, tmp.height);
+    ctx.drawImage(bg, 0, 0);
+    if (ov) ctx.drawImage(ov, 0, 0);
+    const name = (MAPS[currentMap]?.name || 'campus').replace(/\s+/g, '_');
+    const a = document.createElement('a');
+    a.download = `${name}_map.jpg`;
+    a.href = tmp.toDataURL('image/jpeg', 0.92);
+    a.click();
+  });
 
   // Tech buttons
   Object.keys(TECHS).forEach(tech => {
@@ -979,10 +1183,9 @@ function initMapTool() {
       });
     }
 
-    // Property boundary fallback: only draw on schematic fallback.
-    // Satellite maps already include parcel outlines.
+    // Property boundary: only draw on schematic fallback; satellite maps show parcel outlines natively.
     const boundary = m.features.find(f => f.type === 'boundary');
-    if (!imgLoaded && boundary && boundary.points) {
+    if (!imgLoaded && boundary?.points) {
       ctx.strokeStyle = '#ff8c8c';
       ctx.lineWidth = 2;
       ctx.setLineDash([6, 3]);
@@ -1219,75 +1422,105 @@ function initMapTool() {
 
     plist.forEach(p => {
       const t = TECHS[p.tech];
-      const r = (t.size * GRID) / 2;
+      const ftPerCell = MAPS[currentMap].scale / 30.48;
+      const r = Math.max(8, t.placedRadiusFt / ftPerCell * GRID);
+      const hasViolation = p.violations && p.violations.length > 0;
+      const fillColor = hasViolation ? '#d2992290' : t.color + '70';
+      const strokeColor = hasViolation ? '#d29922' : '#fff';
+      const labelColor = hasViolation ? '#d29922' : t.color;
 
+      // Drop shadow
       ctx.save();
-      ctx.globalAlpha = 0.4;
+      ctx.globalAlpha = 0.35;
       ctx.fillStyle = '#000';
       ctx.beginPath(); ctx.ellipse(p.cx, p.cy + r + 2, r * 0.8, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
+      // Placed unit — real-world scaled shape
       ctx.globalAlpha = 1;
-      ctx.fillStyle = t.color + 'dd';
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2.5;
+      ctx.fillStyle = fillColor;
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2;
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 6;
 
-      if (p.tech === 'wind') {
-        ctx.beginPath();
-        ctx.arc(p.cx, p.cy, Math.max(r, 8), 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke();
-      } else {
-        const cells = FOOTPRINT_CELLS[p.tech];
-        if (cells) {
-          const minX = Math.min(...cells.map(([x]) => x));
-          const maxX = Math.max(...cells.map(([x]) => x));
-          const minY = Math.min(...cells.map(([, y]) => y));
-          const maxY = Math.max(...cells.map(([, y]) => y));
-          const widthCells = maxX - minX + 1;
-          const heightCells = maxY - minY + 1;
-          const left = p.cx - (widthCells * GRID) / 2;
-          const top = p.cy - (heightCells * GRID) / 2;
+      if (t.placedWidthFt && t.placedHeightFt) {
+        const hw = Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2;
+        const hh = Math.max(8,  t.placedHeightFt / ftPerCell * GRID) / 2;
+        const rot = ((p.rotation || 0) * Math.PI) / 180;
 
-          cells.forEach(([cx, cy]) => {
-            const px = left + cx * GRID;
-            const py = top + cy * GRID;
-            ctx.fillStyle = p.tech === 'solar' ? '#1a5aaa' : t.color + 'aa';
-            ctx.fillRect(px, py, GRID, GRID);
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(px + 0.5, py + 0.5, GRID - 1, GRID - 1);
-          });
-        } else {
-          const span = Math.max(0.5, t.size) * GRID;
-          const left = p.cx - span / 2;
-          const top = p.cy - span / 2;
-          ctx.fillStyle = t.color + 'aa';
-          ctx.fillRect(left, top, span, span);
-          ctx.strokeStyle = '#fff';
+        ctx.save();
+        ctx.translate(p.cx, p.cy);
+        ctx.rotate(rot);
+
+        // Construction zone rectangle (geothermal only)
+        if (t.constructionWidthFt && t.constructionHeightFt) {
+          const chw = Math.max(16, t.constructionWidthFt  / ftPerCell * GRID) / 2;
+          const chh = Math.max(12, t.constructionHeightFt / ftPerCell * GRID) / 2;
+          ctx.beginPath();
+          ctx.roundRect(-chw, -chh, chw * 2, chh * 2, 4);
+          ctx.fillStyle = t.color + '38';
+          ctx.fill();
+          ctx.strokeStyle = t.color;
           ctx.lineWidth = 2;
-          ctx.strokeRect(left + 0.5, top + 0.5, span - 1, span - 1);
+          ctx.setLineDash([6, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.font = 'bold 9px Space Grotesk,sans-serif';
+          ctx.fillStyle = t.color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText('construction zone', 0, -chh + 12);
         }
+
+        // Main rectangle
+        ctx.fillStyle = fillColor;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(-hw, -hh, hw * 2, hh * 2, 3);
+        ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.max(10, Math.round(hh * 0.9))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(t.symbol, 0, 0);
+
+        ctx.restore();
+
+        // Label always upright, positioned above the visual bounding box
+        const rot90 = p.rotation === 90 || p.rotation === 270;
+        const visHalfH = rot90 ? hw : hh;
+        const labelY = p.cy - visHalfH - 5;
+        ctx.font = 'bold 10px Space Grotesk,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        const labelW = ctx.measureText(t.name).width + 8;
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
+        ctx.fillStyle = labelColor;
+        ctx.fillText(t.name, p.cx, labelY);
+      } else {
+        // Circle for all other techs
+        ctx.beginPath();
+        ctx.arc(p.cx, p.cy, r, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.max(10, Math.round(r * 0.9))}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(t.symbol, p.cx, p.cy);
+        ctx.textBaseline = 'alphabetic';
+        const labelY = p.cy - r - 5;
+        ctx.font = 'bold 10px Space Grotesk,sans-serif';
+        const labelW = ctx.measureText(t.name).width + 8;
+        ctx.fillStyle = 'rgba(0,0,0,0.65)';
+        ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
+        ctx.fillStyle = labelColor;
+        ctx.fillText(t.name, p.cx, labelY);
       }
-
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.max(13, r)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.globalAlpha = 1;
-      ctx.fillText(t.symbol, p.cx, p.cy + Math.max(5, r * 0.35));
-
-
-      // Label with background for readability
-      ctx.font = 'bold 11px Space Grotesk,sans-serif';
-      ctx.textAlign = 'center';
-      const labelY = p.cy - Math.max(r, 8) - 6;
-      const labelW = ctx.measureText(t.name).width + 8;
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
-      ctx.fillRect(p.cx - labelW / 2, labelY - 10, labelW, 13);
-      ctx.fillStyle = t.color;
-      ctx.fillText(t.name, p.cx, labelY);
 
       ctx.globalAlpha = 1;
     });
@@ -1295,36 +1528,79 @@ function initMapTool() {
     if (mode === 'place' && selectedTech && mousePos.x > 0) {
       const t = TECHS[selectedTech];
       const snapped = snapToGridCell(mousePos.x, mousePos.y, selectedTech);
-      ctx.globalAlpha = 0.4;
-      ctx.fillStyle = t.color;
-      if (selectedTech === 'wind') {
+      const _waterTechs = ['hydroL', 'hydroH', 'tidal'];
+      const _snappedZone = getZoneAt(snapped.x, snapped.y);
+      const _isWaterZone = _snappedZone?.type === 'water' || _snappedZone?.type === 'ocean' || _snappedZone?.type === 'tidal_zone';
+      const _boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      const isOutside = !_waterTechs.includes(selectedTech) && !(selectedTech === 'wind' && _isWaterZone) && !!_boundary?.points && !pointInPolygon(snapped.x, snapped.y, _boundary.points);
+      const isOverlapBlocked = wouldOverlap(snapped.x, snapped.y, selectedTech, pendingRotation);
+      const isBlocked = isOutside || isOverlapBlocked;
+      canvas.style.cursor = isBlocked ? 'not-allowed' : 'crosshair';
+
+      const ghostColor = isBlocked ? '#f85149' : t.color;
+      const ftPerCellG = MAPS[currentMap].scale / 30.48;
+
+      const ghostRot = (pendingRotation * Math.PI) / 180;
+
+      // Construction zone ghost (geo)
+      if (t.constructionWidthFt && t.constructionHeightFt) {
+        const chw = Math.max(16, t.constructionWidthFt  / ftPerCellG * GRID) / 2;
+        const chh = Math.max(12, t.constructionHeightFt / ftPerCellG * GRID) / 2;
+        ctx.globalAlpha = 0.55;
+        ctx.save();
+        ctx.translate(snapped.x, snapped.y);
+        ctx.rotate(ghostRot);
+        ctx.fillStyle = ghostColor + '55';
+        ctx.strokeStyle = ghostColor;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
         ctx.beginPath();
-        ctx.arc(snapped.x, snapped.y, Math.max(8, (t.size * GRID) / 2), 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const cells = FOOTPRINT_CELLS[selectedTech];
-        if (cells) {
-          const minX = Math.min(...cells.map(([x]) => x));
-          const maxX = Math.max(...cells.map(([x]) => x));
-          const minY = Math.min(...cells.map(([, y]) => y));
-          const maxY = Math.max(...cells.map(([, y]) => y));
-          const widthCells = maxX - minX + 1;
-          const heightCells = maxY - minY + 1;
-          const left = snapped.x - (widthCells * GRID) / 2;
-          const top = snapped.y - (heightCells * GRID) / 2;
-          cells.forEach(([cx, cy]) => {
-            const px = left + cx * GRID;
-            const py = top + cy * GRID;
-            ctx.fillRect(px, py, GRID, GRID);
-          });
-        } else {
-          const span = Math.max(0.5, t.size) * GRID;
-          const left = snapped.x - span / 2;
-          const top = snapped.y - span / 2;
-          ctx.fillRect(left, top, span, span);
+        ctx.roundRect(-chw, -chh, chw * 2, chh * 2, 4);
+        ctx.fill(); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = '9px Space Grotesk,sans-serif';
+        ctx.fillStyle = ghostColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('construction zone', 0, -chh + 12);
+        ctx.restore();
+      }
+
+      // Main shape ghost — mirrors placed unit exactly
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = ghostColor + 'cc';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      if (t.placedWidthFt && t.placedHeightFt) {
+        const hw = Math.max(12, t.placedWidthFt  / ftPerCellG * GRID) / 2;
+        const hh = Math.max(8,  t.placedHeightFt / ftPerCellG * GRID) / 2;
+        ctx.save();
+        ctx.translate(snapped.x, snapped.y);
+        ctx.rotate(ghostRot);
+        ctx.beginPath();
+        ctx.roundRect(-hw, -hh, hw * 2, hh * 2, 3);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+        // Rotation badge
+        if (pendingRotation !== 0) {
+          ctx.globalAlpha = 0.9;
+          const rot90 = pendingRotation === 90 || pendingRotation === 270;
+          const visHalfH = rot90 ? hw : hh;
+          ctx.font = 'bold 10px Space Grotesk,sans-serif';
+          ctx.fillStyle = ghostColor;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText(`↻ ${pendingRotation}°`, snapped.x, snapped.y - visHalfH - 6);
         }
+      } else {
+        const r = Math.max(8, t.placedRadiusFt / ftPerCellG * GRID);
+        ctx.beginPath();
+        ctx.arc(snapped.x, snapped.y, r, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
       }
       ctx.globalAlpha = 1;
+    } else if (mode !== 'pan') {
+      canvas.style.cursor = 'crosshair';
     }
     ctx.restore();
   }
@@ -1354,9 +1630,9 @@ function initMapTool() {
       water: '✓ Hydro/Tidal suitable',
       ocean: '✓ Tidal/Offshore suitable',
       tidal_zone: '✓ Tidal turbine zone',
-      pinch_point: '⭐ 20% tidal power bonus!',
+      pinch_point: '⭐ Tidal pinch point — strong current zone',
       building: '⚠ Restricted — no wind buffer',
-      forest: '⚠ Forested — wind turbines violate Migratory Bird Ordinance',
+      forest: (getEl<HTMLSelectElement>('envConstraints')?.value === 'Migratory Bird') ? '⚠ Forested — wind turbines violate Migratory Bird Ordinance' : '✓ Forested area',
       field: '✓ Good for Solar/Wind/Geothermal',
       parking: '✓ Good for Solar/Wind arrays',
       road: '✓ Road access — Biomass suitable',
@@ -1368,6 +1644,18 @@ function initMapTool() {
   }
 
   // Minimum distance from point (px,py) to any edge of a polygon
+  function segmentsIntersect(ax1: number, ay1: number, ax2: number, ay2: number,
+                             bx1: number, by1: number, bx2: number, by2: number): boolean {
+    const d1x = ax2 - ax1, d1y = ay2 - ay1;
+    const d2x = bx2 - bx1, d2y = by2 - by1;
+    const cross = d1x * d2y - d1y * d2x;
+    if (Math.abs(cross) < 1e-10) return false;
+    const dx = bx1 - ax1, dy = by1 - ay1;
+    const t = (dx * d2y - dy * d2x) / cross;
+    const u = (dx * d1y - dy * d1x) / cross;
+    return t > 0 && t < 1 && u > 0 && u < 1;
+  }
+
   function pointToPolygonDist(px: number, py: number, points: number[][]): number {
     let minDist = Infinity;
     for (let i = 0; i < points.length; i++) {
@@ -1384,6 +1672,15 @@ function initMapTool() {
   function checkPlacementViolations(x: number, y: number, tech: string): string[] {
     const violations: string[] = [];
     const zone = getZoneAt(x, y);
+
+    const waterTechs = ['hydroL', 'hydroH', 'tidal'];
+    const isOffshoreWind = tech === 'wind' && zone && (zone.type === 'ocean' || zone.type === 'water');
+    if (!waterTechs.includes(tech) && !isOffshoreWind) {
+      const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      if (boundary?.points && !pointInPolygon(x, y, boundary.points)) {
+        violations.push('Must be placed within campus property boundary');
+      }
+    }
 
     if (tech === 'hydroL' || tech === 'hydroH') {
       if (!zone || (zone.type !== 'water' && zone.type !== 'ocean')) {
@@ -1406,7 +1703,9 @@ function initMapTool() {
     if (tech === 'biomass') {
       const roads = MAPS[currentMap].features.filter(f => f.type === 'road' && (f.points || []).length >= 2);
       if (roads.length > 0) {
-        const nearRoad = roads.some(f => pointToPolygonDist(x, y, f.points!) < GRID * 5);
+        const ftPerCell = MAPS[currentMap].scale / 30.48;
+        const roadProximityPx = (100 / ftPerCell) * GRID;
+        const nearRoad = roads.some(f => pointToPolygonDist(x, y, f.points!) < roadProximityPx);
         if (!nearRoad) violations.push('Biomass must be near a road for fuel delivery trucks');
       }
       const biomassBufferPx = 200 / (MAPS[currentMap].scale / 30.48) * GRID;
@@ -1416,30 +1715,90 @@ function initMapTool() {
       if (tooCloseToBuilding) violations.push('Biomass too close to building — exhaust and smoke hazard near windows (200 ft buffer)');
     }
     if (tech === 'wind') {
+      const bufferPx = TECHS.wind.bufferFt / (MAPS[currentMap].scale / 30.48) * GRID;
       MAPS[currentMap].features.forEach(f => {
         if (f.type === 'building' && f.rect) {
           const [rx, ry, rw, rh] = f.rect;
           const closest = [Math.max(rx, Math.min(x, rx + rw)), Math.max(ry, Math.min(y, ry + rh))];
           const d = Math.hypot(closest[0] - x, closest[1] - y);
-          const bufferPx = TECHS.wind.bufferFt / (MAPS[currentMap].scale / 30.48) * GRID;
           if (d < bufferPx) violations.push('Wind buffer touches building — $200K fee');
         }
       });
-      if (zone && zone.type === 'forest') {
+      const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      if (boundary?.points && pointToPolygonDist(x, y, boundary.points) < bufferPx) {
+        violations.push('Wind buffer touches property line — $200K fee');
+      }
+      if (zone && zone.type === 'forest' && getEl<HTMLSelectElement>('envConstraints')?.value === 'Migratory Bird') {
         violations.push('Migratory Bird Ordinance: turbines not permitted in forested areas');
       }
     }
     return violations;
   }
 
+  function getEffectiveHalfDims(tech: string, rotation: number, ftPerCell: number): { hw: number; hh: number } {
+    const t = TECHS[tech];
+    const hw = Math.max(12, t.placedWidthFt!  / ftPerCell * GRID) / 2;
+    const hh = Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2;
+    return (rotation === 90 || rotation === 270) ? { hw: hh, hh: hw } : { hw, hh };
+  }
+
+  function shapesOverlap(
+    x1: number, y1: number, tech1: string, rot1: number,
+    x2: number, y2: number, tech2: string, rot2: number,
+    ftPerCell: number
+  ): boolean {
+    const t1 = TECHS[tech1];
+    const t2 = TECHS[tech2];
+    const isRect1 = !!(t1.placedWidthFt && t1.placedHeightFt);
+    const isRect2 = !!(t2.placedWidthFt && t2.placedHeightFt);
+
+    if (!isRect1 && !isRect2) {
+      const r1 = Math.max(8, t1.placedRadiusFt / ftPerCell * GRID);
+      const r2 = Math.max(8, t2.placedRadiusFt / ftPerCell * GRID);
+      return Math.hypot(x1 - x2, y1 - y2) < r1 + r2;
+    }
+
+    if (isRect1 && isRect2) {
+      const d1 = getEffectiveHalfDims(tech1, rot1, ftPerCell);
+      const d2 = getEffectiveHalfDims(tech2, rot2, ftPerCell);
+      return Math.abs(x1 - x2) < d1.hw + d2.hw && Math.abs(y1 - y2) < d1.hh + d2.hh;
+    }
+
+    // One rect, one circle — find closest point on rect to circle center
+    const [rx, ry, rTech, rRot, cx, cy, cTech] = isRect1
+      ? [x1, y1, tech1, rot1, x2, y2, tech2]
+      : [x2, y2, tech2, rot2, x1, y1, tech1];
+    const { hw, hh } = getEffectiveHalfDims(rTech, rRot, ftPerCell);
+    const circR = Math.max(8, TECHS[cTech].placedRadiusFt / ftPerCell * GRID);
+    const nearX = Math.max(rx - hw, Math.min(cx, rx + hw));
+    const nearY = Math.max(ry - hh, Math.min(cy, ry + hh));
+    return Math.hypot(nearX - cx, nearY - cy) < circR;
+  }
+
+  function wouldOverlap(x: number, y: number, tech: string, rotation = 0, excludeIdx = -1): boolean {
+    const ftPerCell = MAPS[currentMap].scale / 30.48;
+    return (placements[currentMap] || []).some((p, i) => {
+      if (i === excludeIdx) return false;
+      return shapesOverlap(x, y, tech, rotation, p.cx, p.cy, p.tech, p.rotation || 0, ftPerCell);
+    });
+  }
+
   function placeUnit(x: number, y: number) {
     if (!selectedTech) return;
     const snapped = snapToGridCell(x, y, selectedTech);
+    const waterTechs = ['hydroL', 'hydroH', 'tidal'];
+    const snappedZone = getZoneAt(snapped.x, snapped.y);
+    const isWaterZone = snappedZone?.type === 'water' || snappedZone?.type === 'ocean' || snappedZone?.type === 'tidal_zone';
+    if (!waterTechs.includes(selectedTech) && !(selectedTech === 'wind' && isWaterZone)) {
+      const boundary = MAPS[currentMap].features.find(f => f.type === 'boundary' && f.points);
+      if (boundary?.points && !pointInPolygon(snapped.x, snapped.y, boundary.points)) return;
+    }
+    if (wouldOverlap(snapped.x, snapped.y, selectedTech, pendingRotation)) return;
     const violations = checkPlacementViolations(snapped.x, snapped.y, selectedTech);
     placements[currentMap].push({
       tech: selectedTech, cx: snapped.x, cy: snapped.y,
       id: Date.now() + Math.random(),
-      violations
+      violations, rotation: pendingRotation
     });
     buildOptimalCables();
     drawOverlay();
@@ -1481,32 +1840,41 @@ function initMapTool() {
 
   function eraseUnit(x: number, y: number) {
     const plist = placements[currentMap];
+    if (!plist?.length) return;
+    const ftPerCell = MAPS[currentMap].scale / 30.48;
+    // Use real-world-scaled hit radii matching the rendered shapes
     const idx = plist.findIndex(p => {
       const t = TECHS[p.tech];
-      if (p.tech === 'wind') {
-        const r = Math.max(12, t.size * GRID / 2) + 4;
-        return Math.hypot(p.cx - x, p.cy - y) < r;
-      }
-      const cells = FOOTPRINT_CELLS[p.tech];
-      if (cells) {
-        const minX = Math.min(...cells.map(([cx]) => cx));
-        const maxX = Math.max(...cells.map(([cx]) => cx));
-        const minY = Math.min(...cells.map(([, cy]) => cy));
-        const maxY = Math.max(...cells.map(([, cy]) => cy));
-        const width = (maxX - minX + 1) * GRID;
-        const height = (maxY - minY + 1) * GRID;
-        const left = p.cx - width / 2;
-        const top = p.cy - height / 2;
-        return x >= left && x <= left + width && y >= top && y <= top + height;
-      }
-      const span = Math.max(0.5, t.size) * GRID;
-      const left = p.cx - span / 2;
-      const top = p.cy - span / 2;
-      return x >= left && x <= left + span && y >= top && y <= top + span;
+      const hitR = t.placedWidthFt
+        ? Math.max(Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2,
+                   Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2) + 6
+        : Math.max(8, t.placedRadiusFt / ftPerCell * GRID) + 6;
+      return Math.hypot(p.cx - x, p.cy - y) < hitR;
     });
     if (idx >= 0) {
       plist.splice(idx, 1);
       buildOptimalCables();
+      drawOverlay();
+      updateUI();
+    }
+  }
+
+  function rotateUnit(x: number, y: number) {
+    const plist = placements[currentMap];
+    if (!plist?.length) return;
+    const ftPerCell = MAPS[currentMap].scale / 30.48;
+    let bestIdx = -1, bestDist = Infinity;
+    plist.forEach((p, i) => {
+      const t = TECHS[p.tech];
+      const hitR = t.placedWidthFt
+        ? Math.max(Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2,
+                   Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2) + 6
+        : Math.max(8, t.placedRadiusFt / ftPerCell * GRID) + 6;
+      const dist = Math.hypot(p.cx - x, p.cy - y);
+      if (dist < hitR && dist < bestDist) { bestDist = dist; bestIdx = i; }
+    });
+    if (bestIdx >= 0) {
+      plist[bestIdx].rotation = (((plist[bestIdx].rotation || 0) + 90) % 360);
       drawOverlay();
       updateUI();
     }
@@ -1561,36 +1929,50 @@ function initMapTool() {
     return false;
   }
 
-  function computeForestStats() {
-    const m = MAPS[currentMap];
-    // Campus area via shoelace formula on boundary polygon
+  function computeForestStats(mapId = currentMap) {
+    const m = MAPS[mapId];
     const boundary = m.features.find(f => f.type === 'boundary' && f.points);
-    let campusArea = 0;
-    if (boundary?.points) {
-      campusArea = polygonArea(boundary.points);
-    } else {
-      campusArea = m.width * m.height;
-    }
-    // Total forested area — supports both polygon points and rect
+    let campusArea = boundary?.points ? polygonArea(boundary.points) : m.width * m.height;
     const totalForestArea = m.features
       .filter(f => f.type === 'forest')
       .reduce((sum, f) => sum + featureArea(f), 0);
     const forestPct = campusArea > 0 ? (totalForestArea / campusArea) * 100 : 0;
-    // Convert totalForestArea from px² to sq ft for consistent comparison
-    const ftPerGrid = m.scale / 30.48;          // real-world ft per 1 cm on map
-    const pixPerFt = GRID / ftPerGrid;           // canvas pixels per foot
-    const sqFtPerPx2 = 1 / (pixPerFt * pixPerFt); // sq ft per pixel²
-    const totalForestAreaSqFt = totalForestArea * sqFtPerPx2;
-    // Cleared forest: sum footprints (in sq ft) of placements inside any forest feature
-    let clearedAreaSqFt = 0;
-    (placements[currentMap] || []).forEach(p => {
-      const onForest = m.features.some(f => f.type === 'forest' && pointInFeature(p.cx, p.cy, f));
-      if (onForest) {
-        const t = TECHS[p.tech];
-        clearedAreaSqFt += t.squareFootprint > 0 ? t.squareFootprint : 100;
+    const ftPerCell = m.scale / 30.48;
+    let clearedAreaPx2 = 0;
+    const seenIds = new Set<number>();
+    (placements[mapId] || []).forEach((p, i) => {
+      const uid = p.id ?? i;
+      if (seenIds.has(uid)) return;
+      const t = TECHS[p.tech];
+      // Use construction footprint for clearing when available (e.g. geothermal drilling zone)
+      const clearW = t.constructionWidthFt ?? t.placedWidthFt;
+      const clearH = t.constructionHeightFt ?? t.placedHeightFt;
+      const hw = clearW ? clearW / ftPerCell * GRID / 2 : t.placedRadiusFt / ftPerCell * GRID;
+      const hh = clearH ? clearH / ftPerCell * GRID / 2 : hw;
+      // Sample 9 points across the clearing footprint — catches units whose center is just outside the polygon
+      const samples: [number, number][] = [
+        [p.cx,            p.cy           ],
+        [p.cx - hw * 0.6, p.cy          ], [p.cx + hw * 0.6, p.cy          ],
+        [p.cx,            p.cy - hh * 0.6], [p.cx,            p.cy + hh * 0.6],
+        [p.cx - hw * 0.8, p.cy - hh * 0.8], [p.cx + hw * 0.8, p.cy - hh * 0.8],
+        [p.cx - hw * 0.8, p.cy + hh * 0.8], [p.cx + hw * 0.8, p.cy + hh * 0.8],
+      ];
+      const forestHits = samples.filter(([sx, sy]) =>
+        m.features.some(f => f.type === 'forest' && pointInFeature(sx, sy, f))
+      ).length;
+      if (forestHits > 0) {
+        seenIds.add(uid);
+        let unitAreaPx2: number;
+        if (clearW && clearH) {
+          unitAreaPx2 = (clearW / ftPerCell * GRID) * (clearH / ftPerCell * GRID);
+        } else {
+          const r = t.placedRadiusFt / ftPerCell * GRID;
+          unitAreaPx2 = Math.PI * r * r;
+        }
+        clearedAreaPx2 += unitAreaPx2 * (forestHits / samples.length);
       }
     });
-    const clearedPct = totalForestAreaSqFt > 0 ? Math.min(100, (clearedAreaSqFt / totalForestAreaSqFt) * 100) : 0;
+    const clearedPct = totalForestArea > 0 ? Math.min(100, (clearedAreaPx2 / totalForestArea) * 100) : 0;
     return { forestPct: Math.round(forestPct), clearedPct: parseFloat(clearedPct.toFixed(1)) };
   }
 
@@ -1612,7 +1994,8 @@ function initMapTool() {
       const t = TECHS[p.tech];
       totalKw += t.kw;
       totalStorage += t.storageKwh;
-      totalCost += t.cost;
+      const hubDiscount = sharedState.hydroHubActive && (p.tech === 'geo' || p.tech === 'hydroL' || p.tech === 'hydroH') ? 0.8 : 1;
+      totalCost += t.cost * hubDiscount;
       counts[p.tech] = (counts[p.tech] || 0) + 1;
     });
 
@@ -1627,7 +2010,8 @@ function initMapTool() {
     });
     const CABLE_COST_PER_FT = 500; // $500/ft = $50K per 100 ft
     totalCost += cableFt * CABLE_COST_PER_FT;
-    if (totalKw > 3000) totalCost += 500000;
+    if (totalKw > (sharedState.campusPeakDemand || 3000)) totalCost += 500000;
+    if (sharedState.craneShortageActive && (counts.wind || 0) > 0) totalCost += 500000;
 
     // Count wind turbines in ecologically sensitive zones (forest, wetland)
     let windSensitive = 0;
@@ -1640,45 +2024,64 @@ function initMapTool() {
       });
     });
 
+    // Check if any placed wind turbine violates the 500ft building/property buffer
+    const windBufferFromPlacements = Object.values(placements).flat().some(p =>
+      p.tech === 'wind' && p.violations && p.violations.some((v: string) => v.includes('Wind buffer'))
+    );
+    // Check if any cable crosses the property boundary (offshore wind interconnect fee)
+    const windBufferFromCables = Object.keys(cables).some(mapId => {
+      const boundary = MAPS[mapId]?.features.find(f => f.type === 'boundary' && f.points);
+      if (!boundary?.points) return false;
+      const pts = boundary.points;
+      return (cables[mapId] || []).some(seg =>
+        pts.some((_, i) => {
+          const [ax, ay] = pts[i];
+          const [bx, by] = pts[(i + 1) % pts.length];
+          return segmentsIntersect(seg.x1, seg.y1, seg.x2, seg.y2, ax, ay, bx, by);
+        })
+      );
+    });
+    const windBufferHit = windBufferFromPlacements || windBufferFromCables;
+
     // Sync to shared state so Grid Simulator can read it
     sharedState.techCounts = counts;
     sharedState.totalMapCost = totalCost;
     sharedState.totalMapKw = totalKw;
     sharedState.totalMapCableFt = cableFt;
     sharedState.windSensitiveZoneCount = windSensitive;
+    sharedState.windBufferPenalty = windBufferHit;
     emitMapUpdate();
 
     const budgetLimit = sharedState.budgetLimit;
     const budgetM = (budgetLimit / 1e6).toFixed(0);
-    const islandTime = totalKw > 0 ? (totalStorage / 5000).toFixed(1) : '0';
+    const islandTime = totalKw > 0 ? (totalStorage / (sharedState.campusPeakDemand || 3000)).toFixed(1) : '0';
 
     const kwEl = getEl('statPower');
-    if (kwEl) {
-      kwEl.className = 'map-stat ' + (totalKw >= 5000 ? 'ok' : totalKw >= 3000 ? 'warn' : '');
-      kwEl.innerHTML = `Power: <span>${(totalKw / 1000).toFixed(1)}MW / 5MW</span>`;
-    }
+    if (kwEl) kwEl.className = 'map-stat ' + (totalKw >= 3000 ? 'ok' : totalKw >= 1500 ? 'warn' : '');
+    const kwVal = getEl('valPower'); if (kwVal) kwVal.textContent = `${(totalKw / 1000).toFixed(1)}MW / 3MW`;
 
-    const storageEl = getEl('statStorage'); if (storageEl) storageEl.innerHTML = `Storage: <span>${totalStorage.toLocaleString()} kWh</span>`;
-    const cableEl = getEl('statCable'); if (cableEl) cableEl.innerHTML = `Cable: <span>${Math.round(cableFt)} ft</span>`;
+    const storageVal = getEl('valStorage'); if (storageVal) storageVal.textContent = `${totalStorage.toLocaleString()} kWh`;
+    const cableVal = getEl('valCable'); if (cableVal) cableVal.textContent = `${Math.round(cableFt)} ft`;
     const budgetEl = getEl('statBudget');
     if (budgetEl) {
       const over = totalCost > budgetLimit;
       budgetEl.className = 'map-stat' + (over ? ' danger' : totalCost > budgetLimit * 0.85 ? ' warn' : '');
-      budgetEl.innerHTML = `Budget: <span>$${(totalCost / 1e6).toFixed(2)}M / $${budgetM}M</span>`;
     }
-    const islandEl = getEl('statIsland'); if (islandEl) islandEl.innerHTML = `Island: <span>${islandTime}h</span>`;
+    const budgetVal = getEl('valBudget'); if (budgetVal) budgetVal.textContent = `$${(totalCost / 1e6).toFixed(2)}M / $${budgetM}M`;
+    const islandVal = getEl('valIsland'); if (islandVal) islandVal.textContent = `${islandTime}h`;
     const { forestPct, clearedPct } = computeForestStats();
     const forestEl = getEl('statForest');
-    if (forestEl) {
+    const forestVal = getEl('valForest');
+    if (forestEl && forestVal) {
       if (forestPct === 0) {
         forestEl.className = 'map-stat';
-        forestEl.innerHTML = `Forest: <span>none</span>`;
+        forestVal.textContent = 'none';
       } else if (clearedPct === 0) {
         forestEl.className = 'map-stat';
-        forestEl.innerHTML = `Forest: <span>${forestPct}% of campus</span>`;
+        forestVal.textContent = `${forestPct}% of campus`;
       } else {
         forestEl.className = 'map-stat ' + (clearedPct > 25 ? 'err' : clearedPct > 10 ? 'warn' : '');
-        forestEl.innerHTML = `Forest: <span>${clearedPct}% cleared</span> <span style="opacity:0.5">(${forestPct}% of campus)</span>`;
+        forestVal.innerHTML = `${clearedPct}% cleared <span style="opacity:0.5">(${forestPct}% of campus)</span>`;
       }
     }
 
@@ -1708,6 +2111,16 @@ function initMapTool() {
     // Utility upgrade fee is shown on the balance sheet — not a siting violation
     if (totalCost > budgetLimit) allViolations.push(`⛔ OVER BUDGET by $${((totalCost - budgetLimit) / 1e6).toFixed(2)}M`);
 
+    // Forest clearing — check every map independently
+    Object.keys(MAPS).forEach(mapId => {
+      const hasForest = MAPS[mapId].features.some(f => f.type === 'forest');
+      if (!hasForest) return;
+      const { clearedPct } = computeForestStats(mapId);
+      if (clearedPct > 25) {
+        allViolations.push(`🌿 VIOLATION — ${MAPS[mapId].name}: ${clearedPct.toFixed(1)}% of forest cleared — max 25% permitted (Vernal Pool Protection).`);
+      }
+    });
+
     sharedState.mapViolations = [...allViolations];
 
     // Unused import suppressor
@@ -1716,6 +2129,7 @@ function initMapTool() {
 
   function selectTech(tech: string) {
     selectedTech = tech;
+    pendingRotation = 0;
     document.querySelectorAll('.map-tech-btn').forEach(b => b.classList.remove('active'));
     getEl(`btn-${tech}`)?.classList.add('active');
     if (mode !== 'place') setMode('place');
@@ -1725,11 +2139,12 @@ function initMapTool() {
     mode = m;
     getEl('modPlace')?.classList.toggle('active', m === 'place');
     getEl('modErase')?.classList.toggle('active', m === 'erase');
-    getEl('modPan')?.classList.toggle('active', m === 'pan');
+    getEl('modMove')?.classList.toggle('active',  m === 'move');
+    getEl('modPan')?.classList.toggle('active',   m === 'pan');
     const wrap = getEl('canvasWrap');
     wrap?.classList.toggle('erase-mode', m === 'erase');
     const ov = getEl<HTMLCanvasElement>('overlayCanvas');
-    if (ov) ov.style.cursor = m === 'pan' ? 'grab' : '';
+    if (ov) ov.style.cursor = m === 'pan' ? 'grab' : m === 'move' ? 'grab' : '';
   }
 
   function clearAll() {
@@ -1745,10 +2160,18 @@ function initMapTool() {
   const overlayCanvas = getEl<HTMLCanvasElement>('overlayCanvas');
   let panDragging = false;
   let panStartX = 0, panStartY = 0, panScrollX = 0, panScrollY = 0;
+  let moveDragging = false;
+  let movingIdx = -1;
 
   if (overlayCanvas) {
     overlayCanvas.addEventListener('mousedown', (e: MouseEvent) => {
+      if (e.button !== 0) return; // ignore right/middle clicks
       if (mode === 'pan') {
+        if (e.shiftKey) {
+          const { x, y } = getCanvasPos(e);
+          rotateUnit(x, y);
+          return;
+        }
         const container = getEl('mapContainer');
         if (!container) return;
         panDragging = true;
@@ -1761,11 +2184,37 @@ function initMapTool() {
       }
       const { x, y } = getCanvasPos(e);
       if (mode === 'place') {
-        placeUnit(x, y);
+        if (e.shiftKey && TECHS[selectedTech]?.placedWidthFt) {
+          pendingRotation = (pendingRotation + 90) % 360;
+          drawOverlay();
+        } else {
+          placeUnit(x, y);
+        }
       } else if (mode === 'erase') {
-        eraseUnit(x, y);
-      } else if (false) {
-        // cable mode removed — cables are auto-routed via MST
+        if (e.shiftKey) {
+          rotateUnit(x, y);
+        } else {
+          eraseUnit(x, y);
+        }
+      } else if (mode === 'move') {
+        const plist = placements[currentMap];
+        if (!plist?.length) return;
+        const ftPerCell = MAPS[currentMap].scale / 30.48;
+        let bestIdx = -1, bestDist = Infinity;
+        plist.forEach((p, i) => {
+          const t = TECHS[p.tech];
+          const hitR = t.placedWidthFt
+            ? Math.max(Math.max(12, t.placedWidthFt  / ftPerCell * GRID) / 2,
+                       Math.max(8,  t.placedHeightFt! / ftPerCell * GRID) / 2) + 8
+            : Math.max(8, t.placedRadiusFt / ftPerCell * GRID) + 8;
+          const dist = Math.hypot(p.cx - x, p.cy - y);
+          if (dist < hitR && dist < bestDist) { bestDist = dist; bestIdx = i; }
+        });
+        if (bestIdx >= 0) {
+          moveDragging = true;
+          movingIdx = bestIdx;
+          if (overlayCanvas) overlayCanvas.style.cursor = 'grabbing';
+        }
       }
     });
 
@@ -1783,6 +2232,20 @@ function initMapTool() {
       const { x, y } = getCanvasPos(e);
       mousePos = { x, y };
       updateInfoPanel(x, y);
+      if (moveDragging && movingIdx >= 0) {
+        const p = placements[currentMap][movingIdx];
+        const snapped = snapToGridCell(x, y, p.tech);
+        if (wouldOverlap(snapped.x, snapped.y, p.tech, p.rotation || 0, movingIdx)) {
+          overlayCanvas.style.cursor = 'not-allowed';
+        } else {
+          overlayCanvas.style.cursor = 'grabbing';
+          p.cx = snapped.x;
+          p.cy = snapped.y;
+        }
+        buildOptimalCables();
+        drawOverlay();
+        return;
+      }
       if (mode === 'place' || (mode === 'cable' && cableStart)) drawOverlay();
 
       const tooltip = getEl('mapTooltip');
@@ -1800,15 +2263,32 @@ function initMapTool() {
     overlayCanvas.addEventListener('mouseup', () => {
       if (panDragging) {
         panDragging = false;
-        overlayCanvas.style.cursor = mode === 'pan' ? 'grab' : '';
+        overlayCanvas.style.cursor = mode === 'pan' ? 'grab' : 'grab';
+      }
+      if (moveDragging) {
+        moveDragging = false;
+        movingIdx = -1;
+        overlayCanvas.style.cursor = 'grab';
+        buildOptimalCables();
+        updateUI();
       }
     });
 
     overlayCanvas.addEventListener('mouseleave', () => {
       panDragging = false;
+      if (moveDragging) {
+        moveDragging = false;
+        movingIdx = -1;
+        buildOptimalCables();
+        updateUI();
+      }
       mousePos = { x: 0, y: 0 };
       const tooltip = getEl('mapTooltip');
       if (tooltip) tooltip.className = 'map-tooltip hidden';
+    });
+
+    overlayCanvas.addEventListener('contextmenu', (e: MouseEvent) => {
+      e.preventDefault(); // suppress browser context menu on canvas
     });
   }
 

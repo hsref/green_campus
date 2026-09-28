@@ -5,6 +5,7 @@ import { getDatabase, ref, set, onValue, off } from "firebase/database";
 import EnergyGridSimulator from "@/pages/EnergyGridSimulator";
 import CampusMapTool from "@/pages/CampusMapTool";
 import { sharedState } from "@/shared";
+import { initCardModal } from "@/cardModal";
 
 // Firebase config — these values are public-safe, access is controlled by DB rules
 const firebaseConfig = {
@@ -28,10 +29,13 @@ function generateId(): string {
 const CLIENT_ID = generateId();
 
 export default function App() {
-  const [showMap, setShowMap] = useState(false);
-  const [shareLabel, setShareLabel] = useState("🔗 Share Plan");
   const [sessionActive, setSessionActive] = useState(false);
   const [sessionLabel, setSessionLabel] = useState("⚡ Start Session");
+  const [splitPct, setSplitPct] = useState(50);
+  const [splitDir, setSplitDir] = useState<'horizontal' | 'vertical'>('vertical');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => { initCardModal(); }, []);
 
   const sessionIdRef = useRef<string>("");
   const sessionUrlRef = useRef<string>("");
@@ -39,12 +43,15 @@ export default function App() {
   const pushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPullingRef = useRef(false);
   const dbListenerRef = useRef<ReturnType<typeof ref> | null>(null);
+  const isDraggingRef = useRef(false);
+  const splitContainerRef = useRef<HTMLDivElement>(null);
+  const splitDirRef = useRef<'horizontal' | 'vertical'>('vertical');
 
   // ── Plan serialization ──────────────────────────────────────────────────
   function getPlanState(): object {
     const numIds = ["solar","wind","geo","hydroLow","hydroHigh","tidalStd","biomass",
                     "liIon","thermal","flywheel","caes","hydrogen","v2g","scada","cabling","wSolar","wElec","wEng"];
-    const selectIds = ["windBuffer","demandPattern","budgetTier","workforce","envConstraints","pivotCard"];
+    const selectIds = ["demandPattern","budgetTier","workforce","envConstraints","pivotCard"];
     const sim: Record<string, string | number> = {};
     numIds.forEach(id => {
       const el = document.getElementById(id) as HTMLInputElement | null;
@@ -60,17 +67,6 @@ export default function App() {
       if (btn && btn.classList.contains("active")) bessHours.push(i);
     }
     return { v: 1, placements: sharedState.placements, sim, bessHours };
-  }
-
-  // ── Snapshot share (URL-based, no session) ──────────────────────────────
-  function sharePlan() {
-    const plan = getPlanState();
-    const encoded = LZString.compressToEncodedURIComponent(JSON.stringify(plan));
-    const url = `${window.location.origin}${window.location.pathname}?plan=${encoded}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setShareLabel("✅ Copied!");
-      setTimeout(() => setShareLabel("🔗 Share Plan"), 2500);
-    });
   }
 
   // ── Firebase: attach real-time listener ────────────────────────────────
@@ -199,42 +195,45 @@ export default function App() {
     };
   }, []);
 
+  // ── Split-pane drag ─────────────────────────────────────────────────────
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      if (!isDraggingRef.current || !splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const pct = splitDirRef.current === 'horizontal'
+        ? ((e.clientY - rect.top)  / rect.height) * 100
+        : ((e.clientX - rect.left) / rect.width)  * 100;
+      setSplitPct(Math.min(80, Math.max(20, pct)));
+    }
+    function onMouseUp() { isDraggingRef.current = false; }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#0d1117" }}>
+    <div data-theme={theme} style={{ height: "100vh", display: "flex", flexDirection: "column", background: theme === 'dark' ? "#0d1117" : "#f5f4f0" }}>
       <nav style={{
-        background: "#0d1117",
-        borderBottom: "1px solid #30363d",
+        background: theme === 'dark' ? "#0d1117" : "#ffffff",
+        borderBottom: `1px solid ${theme === 'dark' ? "#30363d" : "#d0cdc4"}`,
         display: "flex",
         alignItems: "center",
         gap: 0,
         flexShrink: 0,
         paddingLeft: "12px",
       }}>
-        <div style={{ fontSize: "15px", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", color: "#e6edf3", fontFamily: "'Space Grotesk', sans-serif" }}>
+        <div style={{ fontSize: "15px", fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase", color: theme === 'dark' ? "#e6edf3" : "#1a1917", fontFamily: "'Space Grotesk', sans-serif" }}>
           📊 Renewable Energy Grid Simulator
         </div>
         <div style={{ marginLeft: "auto", marginRight: "12px", fontSize: "11px", color: "#7d8590", fontFamily: "monospace" }}>
           Green Campus Planning Tools
         </div>
-        <button
-          onClick={sharePlan}
-          style={{
-            marginRight: "8px",
-            padding: "5px 14px",
-            borderRadius: "4px",
-            border: "1px solid #30363d",
-            background: "transparent",
-            color: "#7d8590",
-            cursor: "pointer",
-            fontSize: "12px",
-            fontWeight: 600,
-            fontFamily: "'Space Grotesk', sans-serif",
-            letterSpacing: "0.04em",
-            transition: "all 0.15s",
-          }}
-        >
-          {shareLabel}
-        </button>
+        <span style={{ marginRight: "8px", fontSize: "11px", color: "#7d8590", fontFamily: "'Space Grotesk', sans-serif", whiteSpace: "nowrap" }}>
+          {sessionActive ? "click Live to copy share link" : "start Live to get a share link"}
+        </span>
         {sessionActive ? (
           <>
             <button
@@ -297,31 +296,92 @@ export default function App() {
           </button>
         )}
         <button
-          onClick={() => setShowMap(v => !v)}
+          onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
           style={{
-            marginRight: "12px",
-            padding: "5px 14px",
+            marginRight: "8px",
+            padding: "5px 12px",
             borderRadius: "4px",
-            border: `1px solid ${showMap ? "#3fb950" : "#30363d"}`,
-            background: showMap ? "#1a3a22" : "transparent",
-            color: showMap ? "#3fb950" : "#e6edf3",
+            border: `1px solid ${theme === 'dark' ? "#30363d" : "#d0cdc4"}`,
+            background: "transparent",
+            color: theme === 'dark' ? "#7d8590" : "#6b6960",
             cursor: "pointer",
-            fontSize: "12px",
+            fontSize: "11px",
             fontWeight: 600,
             fontFamily: "'Space Grotesk', sans-serif",
             letterSpacing: "0.04em",
             transition: "all 0.15s",
           }}
         >
-          {showMap ? "⚡ SIMULATOR" : "🗺 MAP"}
+          {theme === 'dark' ? '☀ Light' : '☽ Dark'}
+        </button>
+        <button
+          onClick={() => {
+            setSplitDir(d => {
+              const next = d === 'horizontal' ? 'vertical' : 'horizontal';
+              splitDirRef.current = next;
+              setSplitPct(next === 'vertical' ? 50 : 58);
+              return next;
+            });
+          }}
+          style={{
+            marginRight: "12px",
+            padding: "5px 12px",
+            borderRadius: "4px",
+            border: "1px solid #30363d",
+            background: "transparent",
+            color: "#7d8590",
+            cursor: "pointer",
+            fontSize: "11px",
+            fontWeight: 600,
+            fontFamily: "'Space Grotesk', sans-serif",
+            letterSpacing: "0.04em",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "#e6edf3"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "#7d8590"; }}
+        >
+          {splitDir === 'horizontal' ? '↔ Side by Side' : '↕ Stack'}
         </button>
       </nav>
 
-      <div style={{ flex: 1, overflow: "hidden", display: showMap ? "none" : "flex", flexDirection: "column", minHeight: 0 }}>
-        <EnergyGridSimulator />
-      </div>
-      <div style={{ flex: 1, overflow: "hidden", display: showMap ? "flex" : "none", flexDirection: "column", minHeight: 0 }}>
-        <CampusMapTool />
+      <div ref={splitContainerRef} style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: splitDir === 'horizontal' ? 'column' : 'row', minHeight: 0 }}>
+        <div style={{
+          ...(splitDir === 'horizontal'
+            ? { height: `${splitPct}%` }
+            : { width: `${splitPct}%` }),
+          overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0, minWidth: 0,
+        }}>
+          <EnergyGridSimulator />
+        </div>
+        <div
+          onMouseDown={() => { isDraggingRef.current = true; }}
+          style={{
+            [splitDir === 'horizontal' ? 'height' : 'width']: "12px",
+            flexShrink: 0,
+            background: "#484f58",
+            cursor: splitDir === 'horizontal' ? 'row-resize' : 'col-resize',
+            transition: "background 0.15s",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = "#2d5a8e"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = "#484f58"; }}
+        >
+          <div style={{
+            display: "flex",
+            flexDirection: splitDir === 'horizontal' ? 'row' : 'column',
+            gap: "3px",
+            pointerEvents: "none",
+          }}>
+            {[0,1,2,3,4].map(i => (
+              <div key={i} style={{ width: "3px", height: "3px", borderRadius: "50%", background: "#adbac7" }} />
+            ))}
+          </div>
+        </div>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0, minWidth: 0 }}>
+          <CampusMapTool />
+        </div>
       </div>
     </div>
   );

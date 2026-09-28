@@ -5,10 +5,14 @@ export interface SharedState {
   totalMapCost: number;
   totalMapKw: number;
   totalMapCableFt: number;
-  placements: Record<string, Array<{ tech: string; cx: number; cy: number }>>;
+  placements: Record<string, Array<{ tech: string; cx: number; cy: number; rotation?: number; id?: number; violations?: string[] }>>;
   cables: Record<string, Array<{ x1: number; y1: number; x2: number; y2: number }>>;
   windSensitiveZoneCount: number;
+  windBufferPenalty: boolean;
   mapViolations: string[];
+  hydroHubActive: boolean;
+  craneShortageActive: boolean;
+  campusPeakDemand: number;
 }
 
 export const sharedState: SharedState = {
@@ -21,7 +25,11 @@ export const sharedState: SharedState = {
   placements: {},
   cables: {},
   windSensitiveZoneCount: 0,
+  windBufferPenalty: false,
   mapViolations: [],
+  hydroHubActive: false,
+  craneShortageActive: false,
+  campusPeakDemand: 3000,
 };
 
 export function emitMapUpdate() {
