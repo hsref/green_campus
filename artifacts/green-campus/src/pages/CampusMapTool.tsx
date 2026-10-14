@@ -2047,6 +2047,21 @@ function initMapTool() {
     });
     const windBufferHit = windBufferFromPlacements || windBufferFromCables;
 
+    // Build violations before emitting so simulator reads current state on gc:map-update
+    const allViolationsEarly: string[] = [];
+    (placements[currentMap] || []).forEach(p => {
+      if (p.violations && p.violations.length) {
+        p.violations.forEach((v: string) => allViolationsEarly.push(`${TECHS[p.tech].name}: ${v}`));
+      }
+    });
+    if (totalCost > sharedState.budgetLimit) allViolationsEarly.push(`⛔ OVER BUDGET by $${((totalCost - sharedState.budgetLimit) / 1e6).toFixed(2)}M`);
+    Object.keys(MAPS).forEach(mapId => {
+      if (!MAPS[mapId].features.some(f => f.type === 'forest')) return;
+      const { clearedPct } = computeForestStats(mapId);
+      if (clearedPct > 25) allViolationsEarly.push(`🌿 VIOLATION — ${MAPS[mapId].name}: ${clearedPct.toFixed(1)}% of forest cleared — max 25% permitted (Vernal Pool Protection).`);
+    });
+    sharedState.mapViolations = allViolationsEarly;
+
     // Sync to shared state so Grid Simulator can read it
     sharedState.techCounts = counts;
     sharedState.totalMapCost = totalCost;
