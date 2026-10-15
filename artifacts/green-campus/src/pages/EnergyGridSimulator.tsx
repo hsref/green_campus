@@ -1322,8 +1322,12 @@ export default function EnergyGridSimulator() {
       // Hydrogen electrolyzer boosts solar & wind output by 30% — must be declared before supply calcs
       const hydrogenBoost = isGrant && s.hydrogen > 0 ? 1.3 : 1;
 
+      // Pivot-card multipliers — declared here so totalPeakSupply and annualKwh both use them
+      const windMult  = hydrogenBoost * (isMaint ? 0.75 : 1);
+      const solarMult = hydrogenBoost * (isPolar ? 0.1 : 1) * (isMaint ? 0.75 : 1);
+
       const totalPeakSupply =
-        s.solar*500*hydrogenBoost + s.wind*3000*hydrogenBoost + s.geo*2000 +
+        s.solar*500*solarMult + s.wind*3000*windMult + s.geo*2000 +
         s.hydroLow*500 + s.hydroHigh*2000 +
         s.tidalStd*500 + s.biomass*1000;
 
@@ -1352,8 +1356,6 @@ export default function EnergyGridSimulator() {
         scada: s.scada * 500000,
       } : { hydrogen: 0, v2g: 0, scada: 0 };
 
-      const windMult = hydrogenBoost * (isMaint ? 0.75 : 1);
-      const solarMult = hydrogenBoost * (isPolar ? 0.1 : 1) * (isMaint ? 0.75 : 1);
       const hasVarGen = s.solar > 0 || s.wind > 0;
 
       // Calculate renewable energy credits from overproduction
@@ -1471,8 +1473,8 @@ export default function EnergyGridSimulator() {
       const actualPeakSupply = Math.max(...supply24);
 
       const annualKwh = {
-        solar:   s.solar    * ANNUAL_KWH_PER_UNIT.solar * hydrogenBoost,
-        wind:    s.wind     * ANNUAL_KWH_PER_UNIT.wind  * hydrogenBoost,
+        solar:   s.solar    * ANNUAL_KWH_PER_UNIT.solar * solarMult,
+        wind:    s.wind     * ANNUAL_KWH_PER_UNIT.wind  * windMult,
         geo:     s.geo      * ANNUAL_KWH_PER_UNIT.geo,
         hydro:   s.hydroLow * ANNUAL_KWH_PER_UNIT.hydroLow + s.hydroHigh * ANNUAL_KWH_PER_UNIT.hydroHigh,
         tidal:   s.tidalStd * ANNUAL_KWH_PER_UNIT.tidalStd,

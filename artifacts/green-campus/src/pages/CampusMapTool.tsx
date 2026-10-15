@@ -1709,10 +1709,14 @@ function initMapTool() {
         if (!nearRoad) violations.push('Biomass must be near a road for fuel delivery trucks');
       }
       const biomassBufferPx = 200 / (MAPS[currentMap].scale / 30.48) * GRID;
-      const tooCloseToBuilding = MAPS[currentMap].features.some(f =>
-        f.type === 'building' && (f.points || []).length >= 2 && pointToPolygonDist(x, y, f.points!) < biomassBufferPx
-      );
-      if (tooCloseToBuilding) violations.push('Biomass too close to building — exhaust and smoke hazard near windows (200 ft buffer)');
+      const tooCloseToBuilding = MAPS[currentMap].features.some(f => {
+        if (f.type !== 'building' || !f.points || f.points.length < 2) return false;
+        // inside the polygon OR within 200ft of its edge
+        return pointInPolygon(x, y, f.points) || pointToPolygonDist(x, y, f.points) < biomassBufferPx;
+      });
+      const [substationX, substationY] = MAPS[currentMap].substationPx as [number, number];
+      const tooCloseToSubstation = Math.hypot(x - substationX, y - substationY) < biomassBufferPx;
+      if (tooCloseToBuilding || tooCloseToSubstation) violations.push('Biomass too close to building — exhaust and smoke hazard near windows (200 ft buffer)');
     }
     if (tech === 'wind') {
       const bufferPx = TECHS.wind.bufferFt / (MAPS[currentMap].scale / 30.48) * GRID;
@@ -2042,6 +2046,21 @@ function initMapTool() {
       );
     });
     const windBufferHit = windBufferFromPlacements || windBufferFromCables;
+
+    // Build violations before emitting so simulator reads current state on gc:map-update
+    const allViolationsEarly: string[] = [];
+    (placements[currentMap] || []).forEach(p => {
+      if (p.violations && p.violations.length) {
+        p.violations.forEach((v: string) => allViolationsEarly.push(`${TECHS[p.tech].name}: ${v}`));
+      }
+    });
+    if (totalCost > sharedState.budgetLimit) allViolationsEarly.push(`⛔ OVER BUDGET by $${((totalCost - sharedState.budgetLimit) / 1e6).toFixed(2)}M`);
+    Object.keys(MAPS).forEach(mapId => {
+      if (!MAPS[mapId].features.some(f => f.type === 'forest')) return;
+      const { clearedPct } = computeForestStats(mapId);
+      if (clearedPct > 25) allViolationsEarly.push(`🌿 VIOLATION — ${MAPS[mapId].name}: ${clearedPct.toFixed(1)}% of forest cleared — max 25% permitted (Vernal Pool Protection).`);
+    });
+    sharedState.mapViolations = allViolationsEarly;
 
     // Sync to shared state so Grid Simulator can read it
     sharedState.techCounts = counts;
