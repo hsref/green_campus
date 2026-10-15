@@ -1071,8 +1071,8 @@ export default function EnergyGridSimulator() {
     const BIOMASS_PER_UNIT = Array(24).fill(1000);
     // Maine semidiurnal tides: 2 highs + 2 lows per day (~6hr cycle)
     // Peak generation at mid-tide (max flow); near-zero at slack water (high/low)
-    // Profile: peaks at hrs 3,9,15,21 — zeros at hrs 0,6,12,18
-    const TIDAL_STD_PER_UNIT = [0,125,375,500,375,125,0,125,375,500,375,125,0,125,375,500,375,125,0,125,375,500,375,125];
+    // Semidiurnal tide: 2 cycles/day — peaks at hrs 3 and 15, slack at hrs 9 and 21
+    const TIDAL_STD_PER_UNIT = [50,125,375,500,375,250,125,50,25,0,25,125,250,375,450,500,375,250,125,50,25,0,25,50];
 
     // Grid electricity rate and annual kWh production per unit (basis for ROI)
     const GRID_RATE = 0.22;       // $/kWh — Maine commercial rate (own-use savings)
