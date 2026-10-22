@@ -855,6 +855,16 @@ export default function EnergyGridSimulator() {
               <div class="e-chart-wrap">
                 <canvas id="gridChart" height="220"></canvas>
               </div>
+              <div style="padding:0 20px 14px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span style="font-size:11px;color:var(--text-muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em">Clean Energy Coverage</span>
+                  <span id="cleanPctLabel" style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--accent)">0%</span>
+                  <span id="cleanPctNote" style="font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-left:auto"></span>
+                </div>
+                <div style="height:6px;border-radius:3px;background:var(--border);overflow:hidden">
+                  <div id="cleanPctBar" style="height:100%;border-radius:3px;background:var(--accent);width:0%;transition:width 0.4s ease"></div>
+                </div>
+              </div>
             </div>
 
             <div class="e-card" id="batteryDischargeCard" style="display:none">
@@ -1422,6 +1432,10 @@ export default function EnergyGridSimulator() {
 
       // Carbon tax: $0.10/kWh on annual shortfall (demand not met by renewables)
       const dailyShortfallKwh = supply24_temp.reduce((total, supply, i) => total + Math.max(0, demand24[i] - supply), 0);
+
+      const totalDemand24 = demand24.reduce((a, b) => a + b, 0);
+      const cleanCovered24 = supply24_temp.reduce((total, supply, i) => total + Math.min(supply, demand24[i]), 0);
+      const cleanEnergyPct = totalDemand24 > 0 ? Math.round((cleanCovered24 / totalDemand24) * 100) : 0;
       const annualCarbonTaxFee = isCarbonTax ? dailyShortfallKwh * 365 * 0.10 : 0;
 
       // Calculate cost adjustments from pivot cards and data selections
@@ -1539,7 +1553,7 @@ export default function EnergyGridSimulator() {
       return {
         totalPeakSupply, actualPeakSupply, totalStorage, startBudget, totalSpent, remaining, campusPeakDemand,
         islandTime, gridStatus, gridClass,
-        demand24, supply24, renewableCredits, kwSoldBack,
+        demand24, supply24, renewableCredits, kwSoldBack, cleanEnergyPct,
         annualRenewableRevenue, renewableRevenueProjection,
         totalCostAdjustments, geoCostAdjustment, hydroCostAdjustment, liIonCostAdjustment, pivotPenaltyAdjustment, utilityFeeAdjustment, craneLogisticsAdjustment, annualCarbonTaxFee,
         annualKwh, totalAnnualKwh, annualDemandKwh, surplusKwh, capAdjustment,
@@ -1878,6 +1892,25 @@ export default function EnergyGridSimulator() {
       
       const kwSoldMetricEl = getEl('mKwSoldBack');
       if (kwSoldMetricEl) kwSoldMetricEl.textContent = Math.round(r.kwSoldBack).toLocaleString() + ' kW';
+
+      const cleanPctLabel = getEl('cleanPctLabel');
+      const cleanPctBar = getEl('cleanPctBar');
+      const cleanPctNote = getEl('cleanPctNote');
+      if (cleanPctLabel) cleanPctLabel.textContent = r.cleanEnergyPct + '%';
+      if (cleanPctBar) {
+        (cleanPctBar as HTMLElement).style.width = r.cleanEnergyPct + '%';
+        (cleanPctBar as HTMLElement).style.background =
+          r.cleanEnergyPct >= 100 ? '#2ea043' :
+          r.cleanEnergyPct >= 75  ? '#3fb950' :
+          r.cleanEnergyPct >= 50  ? '#d29922' : '#f85149';
+      }
+      if (cleanPctLabel) {
+        (cleanPctLabel as HTMLElement).style.color =
+          r.cleanEnergyPct >= 100 ? '#2ea043' :
+          r.cleanEnergyPct >= 75  ? '#3fb950' :
+          r.cleanEnergyPct >= 50  ? '#d29922' : '#f85149';
+      }
+      if (cleanPctNote) cleanPctNote.textContent = r.cleanEnergyPct >= 100 ? '✅ fully covered' : `${100 - r.cleanEnergyPct}% from grid`;
 
       const alerts: { cls: string; msg: string }[] = [];
       if (r.gridClass !== 'ok') alerts.push({ cls: r.gridClass, msg: r.gridStatus });
